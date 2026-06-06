@@ -48,7 +48,7 @@ const EmployeeForm = () => {
 
   const uploadFile = async (file, fieldName) => {
     if (!file) return null
-    const employeeName = formData.name.trim().replace(/\s+/g, '_') || 'Unknown'
+    const employeeName = formData.name.trim().replace(/[^a-zA-Z0-9_-]/g, '_') || 'Unknown'
     const fileName = `${employeeName}/${fieldName}_${Date.now()}_${file.name}`
     const { error } = await supabase.storage
       .from('employee-documents')
@@ -270,6 +270,7 @@ const EmployeeForm = () => {
 
           {/* DOCUMENTS */}
           <div className="section-header"><span>Documents</span></div>
+          <p className="hint" style={{ marginBottom: '1.5rem' }}>📄 Accepted file types: PDF, JPG, PNG | Maximum file size: 10MB per document</p>
 
           {[
             { key: 'cv', label: '13 — CV', hint: 'Curriculum Vitae (CV)' },
