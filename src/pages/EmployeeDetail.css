@@ -12,48 +12,49 @@
   min-height: 100vh;
   background: #0d0818;
   background-image:
-    linear-gradient(rgba(124,58,237,0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(124,58,237,0.05) 1px, transparent 1px);
+    linear-gradient(rgba(124, 58, 237, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 58, 237, 0.05) 1px, transparent 1px);
   background-size: 40px 40px;
   padding-bottom: 80px;
 }
 
-/* Header */
+/* ─── HEADER ──────────────────────────────────────────── */
 .detail-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 40px;
+  padding: 16px 24px;
   background: #1e1035;
-  border-bottom: 1px solid rgba(124,58,237,0.25);
+  border-bottom: 1px solid rgba(124, 58, 237, 0.25);
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 12px;
 }
 
 .dashboard-brand {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .dashboard-logo {
-  height: 44px;
+  height: 40px;
   width: auto;
   border-radius: 8px;
 }
 
 .dashboard-brand-name {
-  font-family: 'Syne', sans-serif;
+  font-family: "Syne", sans-serif;
   font-weight: 800;
-  font-size: 18px;
+  font-size: clamp(14px, 3.5vw, 18px);
   letter-spacing: 3px;
   color: #f0f4ff;
 }
 
 .dashboard-brand-sub {
-  font-family: 'Syne', sans-serif;
+  font-family: "Syne", sans-serif;
   font-weight: 600;
-  font-size: 18px;
+  font-size: clamp(14px, 3.5vw, 18px);
   letter-spacing: 3px;
   background: linear-gradient(90deg, #a78bfa, #e879f9);
   -webkit-background-clip: text;
@@ -62,60 +63,70 @@
 }
 
 .back-btn {
-  background: rgba(124,58,237,0.1);
+  background: rgba(124, 58, 237, 0.1);
   color: #a78bfa;
-  border: 1px solid rgba(124,58,237,0.3);
+  border: 1px solid rgba(124, 58, 237, 0.3);
   border-radius: 8px;
-  padding: 10px 20px;
-  font-family: 'Syne', sans-serif;
+  padding: 10px 18px;
+  font-family: "Syne", sans-serif;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
+  min-height: 42px;
+  white-space: nowrap;
 }
 
-.back-btn:hover { background: rgba(124,58,237,0.2); }
+.back-btn:hover {
+  background: rgba(124, 58, 237, 0.2);
+}
 
-/* Container */
+/* ─── CONTAINER ───────────────────────────────────────── */
 .detail-container {
   max-width: 900px;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: 32px 20px;
 }
 
-/* Banner */
+/* ─── BANNER ──────────────────────────────────────────── */
 .detail-banner {
   display: flex;
   align-items: center;
   gap: 24px;
-  background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(232,121,249,0.1));
-  border: 1px solid rgba(124,58,237,0.3);
+  background: linear-gradient(
+    135deg,
+    rgba(124, 58, 237, 0.2),
+    rgba(232, 121, 249, 0.1)
+  );
+  border: 1px solid rgba(124, 58, 237, 0.3);
   border-radius: 16px;
-  padding: 32px;
-  margin-bottom: 28px;
+  padding: 28px 24px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
 }
 
 .detail-avatar {
-  width: 72px;
-  height: 72px;
+  width: 68px;
+  height: 68px;
   background: linear-gradient(135deg, #7c3aed, #e879f9);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Syne', sans-serif;
-  font-size: 28px;
+  font-family: "Syne", sans-serif;
+  font-size: 26px;
   font-weight: 800;
   color: #fff;
   flex-shrink: 0;
 }
 
 .detail-banner h1 {
-  font-family: 'Syne', sans-serif;
-  font-size: 26px;
+  font-family: "Syne", sans-serif;
+  font-size: clamp(18px, 5vw, 26px);
   font-weight: 800;
   color: #f0f4ff;
   margin-bottom: 6px;
+  line-height: 1.2;
 }
 
 .detail-banner p {
@@ -123,38 +134,41 @@
   font-size: 14px;
 }
 
-/* Cards */
+/* ─── CARDS ───────────────────────────────────────────── */
 .detail-card {
   background: #1e1035;
-  border: 1px solid rgba(124,58,237,0.25);
+  border: 1px solid rgba(124, 58, 237, 0.25);
   border-radius: 16px;
-  padding: 28px;
-  margin-bottom: 20px;
+  padding: 24px 20px;
+  margin-bottom: 18px;
 }
 
 .detail-card-header {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid rgba(124,58,237,0.15);
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(124, 58, 237, 0.15);
 }
 
-.detail-card-icon { font-size: 20px; }
+.detail-card-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
 
 .detail-card-header h2 {
-  font-family: 'Syne', sans-serif;
-  font-size: 16px;
+  font-family: "Syne", sans-serif;
+  font-size: clamp(14px, 3.5vw, 16px);
   font-weight: 700;
   color: #f0f4ff;
 }
 
-/* Grid */
+/* ─── GRID ────────────────────────────────────────────── */
 .detail-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 18px;
 }
 
 .detail-item {
@@ -168,7 +182,7 @@
 }
 
 .detail-label {
-  font-family: 'Syne', sans-serif;
+  font-family: "Syne", sans-serif;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 1.5px;
@@ -181,39 +195,41 @@
   color: #f0f4ff;
   font-weight: 400;
   line-height: 1.5;
+  word-break: break-word; /* Long values don't overflow on mobile */
 }
 
 .badge-value {
   display: inline-block;
-  background: rgba(124,58,237,0.15);
-  border: 1px solid rgba(124,58,237,0.3);
+  background: rgba(124, 58, 237, 0.15);
+  border: 1px solid rgba(124, 58, 237, 0.3);
   color: #a78bfa;
   padding: 6px 14px;
   border-radius: 99px;
-  font-family: 'Syne', sans-serif;
+  font-family: "Syne", sans-serif;
   font-weight: 700;
   font-size: 14px;
   width: fit-content;
 }
 
 .account-number {
-  font-family: 'Syne', sans-serif;
+  font-family: "Syne", sans-serif;
   font-weight: 700;
-  font-size: 18px;
+  font-size: clamp(15px, 4vw, 18px);
   letter-spacing: 2px;
   color: #e879f9 !important;
+  word-break: break-all;
 }
 
-/* Documents */
+/* ─── DOCUMENTS ───────────────────────────────────────── */
 .documents-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
 }
 
 .document-item {
-  background: rgba(124,58,237,0.05);
-  border: 1px solid rgba(124,58,237,0.2);
+  background: rgba(124, 58, 237, 0.05);
+  border: 1px solid rgba(124, 58, 237, 0.2);
   border-radius: 12px;
   padding: 16px;
   display: flex;
@@ -222,7 +238,7 @@
 }
 
 .document-label {
-  font-family: 'Syne', sans-serif;
+  font-family: "Syne", sans-serif;
   font-size: 12px;
   font-weight: 700;
   color: #a78bfa;
@@ -236,9 +252,12 @@
   font-weight: 500;
   text-decoration: none;
   transition: color 0.2s;
+  word-break: break-all; /* Long URLs don't overflow */
 }
 
-.document-link:hover { color: #a78bfa; }
+.document-link:hover {
+  color: #a78bfa;
+}
 
 .document-missing {
   color: #8a97b8;
@@ -246,9 +265,102 @@
   font-style: italic;
 }
 
+/* ─── TABLET (max 768px) ──────────────────────────────── */
 @media (max-width: 768px) {
-  .detail-header { padding: 16px 20px; }
-  .detail-container { padding: 24px 16px; }
-  .detail-banner { flex-direction: column; text-align: center; }
-  .detail-grid { grid-template-columns: 1fr; }
+  .detail-header {
+    padding: 14px 16px;
+  }
+
+  .detail-container {
+    padding: 20px 14px;
+  }
+
+  .detail-banner {
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+    gap: 16px;
+    padding: 24px 20px;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .documents-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── MOBILE (max 480px) ──────────────────────────────── */
+@media (max-width: 480px) {
+  .detail-header {
+    padding: 12px 14px;
+  }
+
+  .dashboard-logo {
+    height: 34px;
+  }
+
+  .dashboard-brand-name,
+  .dashboard-brand-sub {
+    font-size: 13px;
+    letter-spacing: 2px;
+  }
+
+  .back-btn {
+    font-size: 12px;
+    padding: 8px 14px;
+  }
+
+  .detail-container {
+    padding: 16px 12px;
+  }
+
+  .detail-banner {
+    padding: 20px 16px;
+    border-radius: 14px;
+  }
+
+  .detail-avatar {
+    width: 58px;
+    height: 58px;
+    font-size: 22px;
+  }
+
+  .detail-card {
+    padding: 18px 14px;
+    border-radius: 14px;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .detail-value {
+    font-size: 14px;
+  }
+
+  .badge-value {
+    font-size: 13px;
+    padding: 5px 12px;
+  }
+}
+
+/* ─── SMALL MOBILE (max 360px) ───────────────────────── */
+@media (max-width: 360px) {
+  .detail-container {
+    padding: 14px 10px;
+  }
+
+  .detail-card {
+    padding: 16px 12px;
+  }
+
+  .dashboard-brand-name,
+  .dashboard-brand-sub {
+    font-size: 12px;
+    letter-spacing: 1.5px;
+  }
 }
