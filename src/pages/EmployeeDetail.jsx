@@ -1,46 +1,49 @@
-import { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
-import './EmployeeDetail.css'
-import logo from '../assets/logo.jpg'
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { supabase } from "../lib/supabase";
+import "./EmployeeDetail.css";
+import logo from "../assets/logo.jpg";
 
 const EmployeeDetail = () => {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const [employee, setEmployee] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [employee, setEmployee] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchEmployee()
-  }, [id])
+    fetchEmployee();
+  }, [id]);
 
   const fetchEmployee = async () => {
     const { data, error } = await supabase
-      .from('employee_submissions')
-      .select('*')
-      .eq('id', id)
-      .single()
-    if (!error) setEmployee(data)
-    setLoading(false)
-  }
+      .from("employee_submissions")
+      .select("*")
+      .eq("id", id)
+      .single();
+    if (!error) setEmployee(data);
+    setLoading(false);
+  };
 
   const formatDate = (dateStr) => {
-    return new Date(dateStr).toLocaleDateString('en-GB', {
-      day: '2-digit', month: 'long', year: 'numeric'
-    })
-  }
+    return new Date(dateStr).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+  };
 
-  if (loading) return <div className="detail-loading">⏳ Loading...</div>
-  if (!employee) return <div className="detail-loading">Employee not found</div>
+  if (loading) return <div className="detail-loading">⏳ Loading...</div>;
+  if (!employee)
+    return <div className="detail-loading">Employee not found</div>;
 
   const documents = [
-    { label: 'CV', url: employee.cv_url },
-    { label: 'Highest Qualification', url: employee.qualification_url },
-    { label: 'NYSC Certificate', url: employee.nysc_url },
-    { label: 'Birth Certificate', url: employee.birth_certificate_url },
-    { label: 'Marriage Certificate', url: employee.marriage_certificate_url },
-    { label: 'Valid ID', url: employee.valid_id_url },
-  ]
+    { label: "CV", url: employee.cv_url },
+    { label: "Highest Qualification", url: employee.qualification_url },
+    { label: "NYSC Certificate", url: employee.nysc_url },
+    { label: "Birth Certificate", url: employee.birth_certificate_url },
+    { label: "Marriage Certificate", url: employee.marriage_certificate_url },
+    { label: "Valid ID", url: employee.valid_id_url },
+  ];
 
   return (
     <div className="detail-wrapper">
@@ -53,17 +56,24 @@ const EmployeeDetail = () => {
             <span className="dashboard-brand-sub"> GLOBAL</span>
           </div>
         </div>
-        <button className="back-btn" onClick={() => navigate('/dashboard')}>
+        <button className="back-btn" onClick={() => navigate("/dashboard")}>
           ← Back to Dashboard
         </button>
       </div>
 
       <div className="detail-container">
-
         {/* Employee Name Banner */}
         <div className="detail-banner">
           <div className="detail-avatar">
-            {employee.name.charAt(0).toUpperCase()}
+            {employee.avatar_url ? (
+              <img
+                src={employee.avatar_url}
+                alt={employee.name}
+                className="detail-avatar-img"
+              />
+            ) : (
+              employee.name.charAt(0).toUpperCase()
+            )}
           </div>
           <div>
             <h1>{employee.name}</h1>
@@ -122,11 +132,15 @@ const EmployeeDetail = () => {
           <div className="detail-grid">
             <div className="detail-item">
               <span className="detail-label">Blood Group</span>
-              <span className="detail-value badge-value">{employee.blood_group}</span>
+              <span className="detail-value badge-value">
+                {employee.blood_group}
+              </span>
             </div>
             <div className="detail-item">
               <span className="detail-label">Genotype</span>
-              <span className="detail-value badge-value">{employee.genotype}</span>
+              <span className="detail-value badge-value">
+                {employee.genotype}
+              </span>
             </div>
           </div>
         </div>
@@ -162,7 +176,9 @@ const EmployeeDetail = () => {
             </div>
             <div className="detail-item">
               <span className="detail-label">Account Number</span>
-              <span className="detail-value account-number">{employee.account_number}</span>
+              <span className="detail-value account-number">
+                {employee.account_number}
+              </span>
             </div>
           </div>
         </div>
@@ -178,7 +194,12 @@ const EmployeeDetail = () => {
               <div key={label} className="document-item">
                 <span className="document-label">{label}</span>
                 {url ? (
-                  <a href={url} target="_blank" rel="noreferrer" className="document-link">
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="document-link"
+                  >
                     📎 View Document
                   </a>
                 ) : (
@@ -188,10 +209,9 @@ const EmployeeDetail = () => {
             ))}
           </div>
         </div>
-
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default EmployeeDetail
+export default EmployeeDetail;

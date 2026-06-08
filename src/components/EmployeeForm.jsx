@@ -48,6 +48,8 @@ const EmployeeForm = () => {
     validid: "",
   });
 
+  const [avatar, setAvatar] = useState(null); // File object
+  const [avatarPreview, setAvatarPreview] = useState(null); // Local preview URL
   const [status, setStatus] = useState("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -72,9 +74,26 @@ const EmployeeForm = () => {
     setFileNames({ ...fileNames, [field]: file.name });
   };
 
+  const handleAvatar = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const allowed = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowed.includes(file.type)) {
+      alert("Avatar: Only JPG, PNG or WEBP images are allowed!");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Avatar: Image must be under 5MB!");
+      return;
+    }
+    setAvatar(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  };
+
   const validateStep = () => {
     setErrorMsg("");
     if (currentStep === 0) {
+      if (!avatar) return "Please upload a profile photo.";
       if (!formData.name) return "Please enter your full name.";
       if (!formData.address) return "Please enter your current address.";
       if (!formData.phone) return "Please enter your phone number.";
@@ -142,15 +161,23 @@ const EmployeeForm = () => {
     setStatus("uploading");
     setErrorMsg("");
 
-    const [cvUrl, qualUrl, nyscUrl, birthUrl, marriageUrl, validIdUrl] =
-      await Promise.all([
-        uploadFile(files.cv, "CV"),
-        uploadFile(files.qualification, "Qualification"),
-        uploadFile(files.nysc, "NYSC"),
-        uploadFile(files.birth, "BirthCertificate"),
-        uploadFile(files.marriage, "MarriageCertificate"),
-        uploadFile(files.validid, "ValidID"),
-      ]);
+    const [
+      cvUrl,
+      qualUrl,
+      nyscUrl,
+      birthUrl,
+      marriageUrl,
+      validIdUrl,
+      avatarUrl,
+    ] = await Promise.all([
+      uploadFile(files.cv, "CV"),
+      uploadFile(files.qualification, "Qualification"),
+      uploadFile(files.nysc, "NYSC"),
+      uploadFile(files.birth, "BirthCertificate"),
+      uploadFile(files.marriage, "MarriageCertificate"),
+      uploadFile(files.validid, "ValidID"),
+      uploadFile(avatar, "Avatar"),
+    ]);
 
     setStatus("saving");
 
@@ -175,6 +202,7 @@ const EmployeeForm = () => {
       valid_id_url: validIdUrl,
       bank_name: formData.bankname,
       account_number: formData.accountnum,
+      avatar_url: avatarUrl,
     });
 
     if (error) {
@@ -284,6 +312,71 @@ const EmployeeForm = () => {
           {/* ── STEP 1: PERSONAL INFORMATION ── */}
           {currentStep === 0 && (
             <div className="step-content">
+              {/* Avatar Upload */}
+              <div className="avatar-field">
+                <label className="avatar-upload-label" htmlFor="avatar-input">
+                  {avatarPreview ? (
+                    <img
+                      src={avatarPreview}
+                      alt="Preview"
+                      className="avatar-preview"
+                    />
+                  ) : (
+                    <div className="avatar-placeholder">
+                      <svg
+                        width="36"
+                        height="36"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          cx="12"
+                          cy="8"
+                          r="4"
+                          stroke="#a78bfa"
+                          strokeWidth="1.5"
+                        />
+                        <path
+                          d="M4 20c0-4 3.6-7 8-7s8 3 8 7"
+                          stroke="#a78bfa"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </div>
+                  )}
+                  <div className="avatar-edit-badge">
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+                      <path
+                        d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"
+                        stroke="#fff"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                      <path
+                        d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"
+                        stroke="#fff"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </div>
+                </label>
+                <input
+                  id="avatar-input"
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp"
+                  onChange={handleAvatar}
+                  style={{ display: "none" }}
+                />
+                <div className="avatar-field-text">
+                  <span className="avatar-field-title">Profile Photo</span>
+                  <span className="avatar-field-hint">
+                    JPG, PNG or WEBP · Max 5MB · Required
+                  </span>
+                </div>
+              </div>
+
               <div className="field">
                 <label>
                   01 — Full Name <span className="req">*</span>
@@ -481,13 +574,21 @@ const EmployeeForm = () => {
                   <option value="" disabled>
                     Select blood group
                   </option>
-                  {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(
-                    (opt) => (
-                      <option key={opt} value={opt}>
-                        {opt}
-                      </option>
-                    ),
-                  )}
+                  {[
+                    "A+",
+                    "A-",
+                    "B+",
+                    "B-",
+                    "AB+",
+                    "AB-",
+                    "O+",
+                    "O-",
+                    "Prefer not to say",
+                  ].map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="field">
@@ -503,11 +604,13 @@ const EmployeeForm = () => {
                   <option value="" disabled>
                     Select genotype
                   </option>
-                  {["AA", "AS", "AC", "SS", "SC"].map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
+                  {["AA", "AS", "AC", "SS", "SC", "Prefer not to say"].map(
+                    (opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ),
+                  )}
                 </select>
               </div>
             </div>

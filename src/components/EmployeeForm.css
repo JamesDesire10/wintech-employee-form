@@ -116,7 +116,7 @@ body {
   align-items: flex-start;
   gap: 14px;
   position: relative;
-  padding-bottom: 28px;
+  padding-bottom: 36px;
   cursor: default;
 }
 
@@ -129,9 +129,10 @@ body {
   left: 13px;
   top: 28px;
   width: 2px;
-  height: calc(100% - 4px);
+  height: calc(100% - 28px);
   background: rgba(124, 58, 237, 0.2);
   transition: background 0.3s;
+  z-index: 0;
 }
 
 .sidebar-line.filled {
@@ -795,5 +796,99 @@ textarea:focus,
   .submit-btn {
     padding: 13px 20px;
     font-size: 14px;
+  }
+}
+
+/* ─── AVATAR UPLOAD ───────────────────────────────────── */
+.avatar-field {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 28px;
+}
+
+.avatar-upload-label {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: block;
+}
+
+.avatar-placeholder {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: rgba(124, 58, 237, 0.1);
+  border: 2px dashed rgba(124, 58, 237, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+}
+
+.avatar-upload-label:hover .avatar-placeholder {
+  border-color: var(--purple);
+  background: rgba(124, 58, 237, 0.15);
+}
+
+.avatar-preview {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--purple);
+  display: block;
+}
+
+.avatar-edit-badge {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 26px;
+  height: 26px;
+  background: linear-gradient(135deg, var(--purple), #6d28d9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--navy);
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.4);
+}
+
+.avatar-field-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.avatar-field-title {
+  font-family: "Syne", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--white);
+}
+
+.avatar-field-hint {
+  font-size: 12px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+@media (max-width: 480px) {
+  .avatar-field {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 16px;
+    gap: 12px;
   }
 }
