@@ -551,3 +551,124 @@
     font-size: 13px;
   }
 }
+
+/* ─── STATS OVERVIEW ──────────────────────────────────── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  padding: 0 24px 24px;
+}
+
+.stat-card {
+  background: #1e1035;
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  border-radius: 14px;
+  padding: 18px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+.stat-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  border-radius: 14px 14px 0 0;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.2);
+}
+
+.stat-icon {
+  width: 40px;
+  height: 40px;
+  background: rgba(124, 58, 237, 0.12);
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.stat-icon svg {
+  width: 20px;
+  height: 20px;
+  color: var(--accent);
+  stroke: var(--accent);
+}
+
+.stat-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.stat-value {
+  font-family: "Syne", sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: #f0f4ff;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.stat-label {
+  font-family: "Syne", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #a78bfa;
+  letter-spacing: 0.5px;
+}
+
+.stat-sub {
+  font-size: 11px;
+  color: #8a97b8;
+  margin-top: 2px;
+}
+
+/* ─── RESPONSIVE STATS ────────────────────────────────── */
+@media (max-width: 768px) {
+  .stats-grid {
+    padding: 0 16px 20px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .stat-value {
+    font-size: 18px;
+  }
+  .stat-icon {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .stat-card {
+    padding: 14px 12px;
+    gap: 10px;
+  }
+  .stat-value {
+    font-size: 16px;
+  }
+}

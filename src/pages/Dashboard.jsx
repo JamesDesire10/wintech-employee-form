@@ -30,6 +30,38 @@ const Modal = ({
   </div>
 );
 
+// ── STATS HELPER ──────────────────────────────────────────
+const getMostCommon = (arr, key) => {
+  if (!arr.length) return "—";
+  const freq = {};
+  arr.forEach((s) => {
+    const v = s[key];
+    if (v) freq[v] = (freq[v] || 0) + 1;
+  });
+  return Object.entries(freq).sort((a, b) => b[1] - a[1])[0]?.[0] || "—";
+};
+
+const getThisWeek = (arr) => {
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 7);
+  return arr.filter((s) => new Date(s.created_at) >= weekAgo).length;
+};
+
+const getGenderCount = (arr, gender) =>
+  arr.filter((s) => s.gender?.toLowerCase() === gender.toLowerCase()).length;
+
+// ── STAT CARD COMPONENT ───────────────────────────────────
+const StatCard = ({ icon, label, value, sub, color }) => (
+  <div className="stat-card" style={{ "--accent": color }}>
+    <div className="stat-icon">{icon}</div>
+    <div className="stat-body">
+      <div className="stat-value">{value}</div>
+      <div className="stat-label">{label}</div>
+      {sub && <div className="stat-sub">{sub}</div>}
+    </div>
+  </div>
+);
+
 const Dashboard = () => {
   const [submissions, setSubmissions] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -48,14 +80,12 @@ const Dashboard = () => {
 
   useEffect(() => {
     let result = submissions;
-    if (search) {
+    if (search)
       result = result.filter((s) =>
         s.name.toLowerCase().includes(search.toLowerCase()),
       );
-    }
-    if (dateFilter) {
+    if (dateFilter)
       result = result.filter((s) => s.created_at.startsWith(dateFilter));
-    }
     setFiltered(result);
   }, [search, dateFilter, submissions]);
 
@@ -144,7 +174,6 @@ const Dashboard = () => {
     a.href = url;
     a.download = `wintech-submissions-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
-
     await supabase.from("audit_logs").insert({
       action: "CSV_EXPORT",
       details: `Exported ${filtered.length} submissions on ${new Date().toLocaleString()}`,
@@ -156,17 +185,32 @@ const Dashboard = () => {
     navigate("/admin");
   };
 
-  const formatDate = (dateStr) => {
-    return new Date(dateStr).toLocaleDateString("en-GB", {
+  const formatDate = (dateStr) =>
+    new Date(dateStr).toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "short",
       year: "numeric",
     });
+
+  const stats = {
+    total: submissions.length,
+    thisWeek: getThisWeek(submissions),
+    male: getGenderCount(submissions, "male"),
+    female: getGenderCount(submissions, "female"),
+    topBlood: getMostCommon(submissions, "blood_group"),
+    topGenotype: getMostCommon(submissions, "genotype"),
+    topBank: (() => {
+      const raw = getMostCommon(submissions, "bank_name");
+      if (!raw || raw === "—") return "—";
+      // Extract just bank name before ' — ' or ' - '
+      const parts = raw.split(/\s[—\-]\s/);
+      return parts[0]?.trim() || raw;
+    })(),
   };
 
   return (
     <div className="dashboard-wrapper">
-      {/* Logout Modal */}
+      {/* Modals */}
       {showLogoutModal && (
         <Modal
           icon="🚪"
@@ -178,8 +222,6 @@ const Dashboard = () => {
           onCancel={() => setShowLogoutModal(false)}
         />
       )}
-
-      {/* Delete Modal */}
       {showDeleteModal && (
         <Modal
           icon="🗑️"
@@ -194,8 +236,6 @@ const Dashboard = () => {
           }}
         />
       )}
-
-      {/* Export Modal */}
       {showExportModal && (
         <Modal
           icon="📥"
@@ -246,6 +286,141 @@ const Dashboard = () => {
         </h1>
         <p>View and manage all employee information submissions</p>
       </div>
+
+      {/* ── STATS OVERVIEW ── */}
+      {!loading && submissions.length > 0 && (
+        <div className="stats-grid">
+          {/* Total Employees — group of people */}
+          <StatCard
+            icon={
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+              </svg>
+            }
+            label="Total Employees"
+            value={stats.total}
+            sub="All time submissions"
+            color="#7c3aed"
+          />
+          {/* This Week — calendar */}
+          <StatCard
+            icon={
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
+                <rect x="3" y="4" width="18" height="18" rx="2" />
+                <path d="M16 2v4M8 2v4M3 10h18" />
+              </svg>
+            }
+            label="This Week"
+            value={stats.thisWeek}
+            sub="Last 7 days"
+            color="#6d28d9"
+          />
+          {/* Male — male gender symbol */}
+          <StatCard
+            icon={
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
+                <circle cx="10" cy="14" r="5" />
+                <path d="M19 5l-5.5 5.5M19 5h-5M19 5v5" />
+              </svg>
+            }
+            label="Male"
+            value={stats.male}
+            sub={`${stats.total ? Math.round((stats.male / stats.total) * 100) : 0}% of total`}
+            color="#4f46e5"
+          />
+          {/* Female — female gender symbol */}
+          <StatCard
+            icon={
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
+                <circle cx="12" cy="9" r="5" />
+                <path d="M12 14v6M9 17h6" />
+              </svg>
+            }
+            label="Female"
+            value={stats.female}
+            sub={`${stats.total ? Math.round((stats.female / stats.total) * 100) : 0}% of total`}
+            color="#7c3aed"
+          />
+          {/* Top Blood Group — blood drop */}
+          <StatCard
+            icon={
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
+                <path d="M12 2C12 2 5 9.5 5 14a7 7 0 0014 0c0-4.5-7-12-7-12z" />
+              </svg>
+            }
+            label="Top Blood Group"
+            value={stats.topBlood}
+            sub="Most common"
+            color="#9333ea"
+          />
+          {/* Top Genotype — DNA helix style */}
+          <StatCard
+            icon={
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
+                <path d="M6 3c0 4 12 4 12 8S6 17 6 21M18 3c0 4-12 4-12 8s12 6 12 10" />
+                <line x1="6" y1="8" x2="18" y2="8" />
+                <line x1="6" y1="16" x2="18" y2="16" />
+              </svg>
+            }
+            label="Top Genotype"
+            value={stats.topGenotype}
+            sub="Most common"
+            color="#a855f7"
+          />
+          {/* Top Bank — bank building with columns */}
+          <StatCard
+            icon={
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
+                <path d="M3 10h18M3 18h18M12 3L3 8h18L12 3z" />
+                <line x1="7" y1="10" x2="7" y2="18" />
+                <line x1="12" y1="10" x2="12" y2="18" />
+                <line x1="17" y1="10" x2="17" y2="18" />
+              </svg>
+            }
+            label="Top Bank"
+            value={stats.topBank}
+            sub="Most used"
+            color="#c026d3"
+          />
+        </div>
+      )}
 
       {/* Filters */}
       <div className="filters">
