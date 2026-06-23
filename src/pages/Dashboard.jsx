@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import "./Dashboard.css";
@@ -30,7 +31,7 @@ const Modal = ({
   </div>
 );
 
-// ── STATS HELPER ──────────────────────────────────────────
+// ── STATS HELPERS ─────────────────────────────────────────
 const getMostCommon = (arr, key) => {
   if (!arr.length) return "—";
   const freq = {};
@@ -40,17 +41,15 @@ const getMostCommon = (arr, key) => {
   });
   return Object.entries(freq).sort((a, b) => b[1] - a[1])[0]?.[0] || "—";
 };
-
 const getThisWeek = (arr) => {
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate() - 7);
   return arr.filter((s) => new Date(s.created_at) >= weekAgo).length;
 };
-
 const getGenderCount = (arr, gender) =>
   arr.filter((s) => s.gender?.toLowerCase() === gender.toLowerCase()).length;
 
-// ── STAT CARD COMPONENT ───────────────────────────────────
+// ── STAT CARD ─────────────────────────────────────────────
 const StatCard = ({ icon, label, value, sub, color }) => (
   <div className="stat-card" style={{ "--accent": color }}>
     <div className="stat-icon">{icon}</div>
@@ -62,32 +61,160 @@ const StatCard = ({ icon, label, value, sub, color }) => (
   </div>
 );
 
+// ── SORT ICON ─────────────────────────────────────────────
+const SortIcon = ({ column, sortKey, sortDir }) => {
+  if (sortKey !== column)
+    return (
+      <svg
+        className="sort-icon sort-idle"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <path d="M8 9l4-4 4 4M16 15l-4 4-4-4" />
+      </svg>
+    );
+  return sortDir === "asc" ? (
+    <svg
+      className="sort-icon sort-active"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M12 5l-7 7h14l-7-7z" />
+    </svg>
+  ) : (
+    <svg
+      className="sort-icon sort-active"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M12 19l7-7H5l7 7z" />
+    </svg>
+  );
+};
+
+const ROWS_PER_PAGE = 10;
+const IDLE_TIMEOUT = 15 * 60 * 1000;
+const WARNING_BEFORE = 60 * 1000;
+
 const Dashboard = () => {
   const [submissions, setSubmissions] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [dateFilter, setDateFilter] = useState("");
+  const [sortKey, setSortKey] = useState("created_at");
+  const [sortDir, setSortDir] = useState("desc");
+  const [currentPage, setCurrentPage] = useState(1);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
+  const [countdown, setCountdown] = useState(60);
   const navigate = useNavigate();
+
+  // ── SESSION TIMEOUT ───────────────────────────────────
+  useEffect(() => {
+    let idleTimer = null;
+    let warningTimer = null;
+    let countdownInterval = null;
+
+    const resetTimers = () => {
+      clearTimeout(idleTimer);
+      clearTimeout(warningTimer);
+      clearInterval(countdownInterval);
+      setShowTimeoutWarning(false);
+      setCountdown(60);
+
+      warningTimer = setTimeout(() => {
+        setShowTimeoutWarning(true);
+        let secs = 60;
+        setCountdown(secs);
+        countdownInterval = setInterval(() => {
+          secs -= 1;
+          setCountdown(secs);
+          if (secs <= 0) clearInterval(countdownInterval);
+        }, 1000);
+      }, IDLE_TIMEOUT - WARNING_BEFORE);
+
+      idleTimer = setTimeout(() => {
+        sessionStorage.removeItem("wintech_admin");
+        navigate("/admin");
+      }, IDLE_TIMEOUT);
+    };
+
+    const events = [
+      "mousemove",
+      "mousedown",
+      "keydown",
+      "scroll",
+      "touchstart",
+      "click",
+    ];
+    events.forEach((e) =>
+      window.addEventListener(e, resetTimers, { passive: true }),
+    );
+    resetTimers();
+
+    return () => {
+      clearTimeout(idleTimer);
+      clearTimeout(warningTimer);
+      clearInterval(countdownInterval);
+      events.forEach((e) => window.removeEventListener(e, resetTimers));
+    };
+  }, [navigate]);
 
   useEffect(() => {
     fetchSubmissions();
   }, []);
 
   useEffect(() => {
-    let result = submissions;
+    let result = [...submissions];
     if (search)
       result = result.filter((s) =>
         s.name.toLowerCase().includes(search.toLowerCase()),
       );
     if (dateFilter)
       result = result.filter((s) => s.created_at.startsWith(dateFilter));
+
+    result.sort((a, b) => {
+      let aVal = a[sortKey] ?? "";
+      let bVal = b[sortKey] ?? "";
+      if (sortKey === "created_at") {
+        aVal = new Date(aVal);
+        bVal = new Date(bVal);
+        return sortDir === "asc" ? aVal - bVal : bVal - aVal;
+      }
+      aVal = aVal.toString().toLowerCase();
+      bVal = bVal.toString().toLowerCase();
+      if (aVal < bVal) return sortDir === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+
     setFiltered(result);
-  }, [search, dateFilter, submissions]);
+    setCurrentPage(1);
+  }, [search, dateFilter, submissions, sortKey, sortDir]);
+
+  const totalPages = Math.ceil(filtered.length / ROWS_PER_PAGE);
+  const paginatedRows = filtered.slice(
+    (currentPage - 1) * ROWS_PER_PAGE,
+    currentPage * ROWS_PER_PAGE,
+  );
+
+  const handleSort = (key) => {
+    if (sortKey === key) setSortDir(sortDir === "asc" ? "desc" : "asc");
+    else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  };
 
   const fetchSubmissions = async () => {
     setLoading(true);
@@ -202,15 +329,50 @@ const Dashboard = () => {
     topBank: (() => {
       const raw = getMostCommon(submissions, "bank_name");
       if (!raw || raw === "—") return "—";
-      // Extract just bank name before ' — ' or ' - '
-      const parts = raw.split(/\s[—\-]\s/);
-      return parts[0]?.trim() || raw;
+      return raw.split(/\s[—\-]\s/)[0]?.trim() || raw;
     })(),
   };
 
+  const columns = [
+    { label: "Name", key: "name" },
+    { label: "Gender", key: "gender" },
+    { label: "Phone", key: "phone" },
+    { label: "Blood Group", key: "blood_group" },
+    { label: "Genotype", key: "genotype" },
+    { label: "Bank", key: "bank_name" },
+    { label: "Submitted", key: "created_at" },
+  ];
+
   return (
     <div className="dashboard-wrapper">
-      {/* Modals */}
+      {/* Session Timeout Warning */}
+      {showTimeoutWarning && (
+        <div className="modal-overlay">
+          <div className="modal-card">
+            <div className="modal-icon">⏱️</div>
+            <h2 className="modal-title">Still there?</h2>
+            <p className="modal-message">
+              You've been inactive. Auto-logout in{" "}
+              <strong style={{ color: "#e879f9" }}>{countdown}s</strong>.
+            </p>
+            <div className="timeout-bar-track">
+              <div
+                className="timeout-bar-fill"
+                style={{ width: `${(countdown / 60) * 100}%` }}
+              />
+            </div>
+            <div className="modal-actions" style={{ marginTop: "20px" }}>
+              <button
+                className="modal-confirm confirm-export"
+                onClick={() => setShowTimeoutWarning(false)}
+              >
+                I'm still here
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showLogoutModal && (
         <Modal
           icon="🚪"
@@ -287,10 +449,9 @@ const Dashboard = () => {
         <p>View and manage all employee information submissions</p>
       </div>
 
-      {/* ── STATS OVERVIEW ── */}
+      {/* Stats */}
       {!loading && submissions.length > 0 && (
         <div className="stats-grid">
-          {/* Total Employees — group of people */}
           <StatCard
             icon={
               <svg
@@ -309,7 +470,6 @@ const Dashboard = () => {
             sub="All time submissions"
             color="#7c3aed"
           />
-          {/* This Week — calendar */}
           <StatCard
             icon={
               <svg
@@ -327,7 +487,6 @@ const Dashboard = () => {
             sub="Last 7 days"
             color="#6d28d9"
           />
-          {/* Male — male gender symbol */}
           <StatCard
             icon={
               <svg
@@ -345,7 +504,6 @@ const Dashboard = () => {
             sub={`${stats.total ? Math.round((stats.male / stats.total) * 100) : 0}% of total`}
             color="#4f46e5"
           />
-          {/* Female — female gender symbol */}
           <StatCard
             icon={
               <svg
@@ -363,7 +521,6 @@ const Dashboard = () => {
             sub={`${stats.total ? Math.round((stats.female / stats.total) * 100) : 0}% of total`}
             color="#7c3aed"
           />
-          {/* Top Blood Group — blood drop */}
           <StatCard
             icon={
               <svg
@@ -380,7 +537,6 @@ const Dashboard = () => {
             sub="Most common"
             color="#9333ea"
           />
-          {/* Top Genotype — DNA helix style */}
           <StatCard
             icon={
               <svg
@@ -399,7 +555,6 @@ const Dashboard = () => {
             sub="Most common"
             color="#a855f7"
           />
-          {/* Top Bank — bank building with columns */}
           <StatCard
             icon={
               <svg
@@ -459,62 +614,141 @@ const Dashboard = () => {
       ) : filtered.length === 0 ? (
         <div className="empty">No submissions found</div>
       ) : (
-        <div className="table-wrap">
-          <table className="submissions-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Gender</th>
-                <th>Phone</th>
-                <th>Blood Group</th>
-                <th>Genotype</th>
-                <th>Bank</th>
-                <th>Submitted</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((s, index) => (
-                <tr
-                  key={s.id}
-                  onClick={() => navigate(`/dashboard/${s.id}`)}
-                  className="table-row"
-                >
-                  <td>{index + 1}</td>
-                  <td className="name-cell">{s.name}</td>
-                  <td>{s.gender}</td>
-                  <td>{s.phone}</td>
-                  <td>
-                    <span className="badge">{s.blood_group}</span>
-                  </td>
-                  <td>
-                    <span className="badge">{s.genotype}</span>
-                  </td>
-                  <td>{s.bank_name}</td>
-                  <td>{formatDate(s.created_at)}</td>
-                  <td>
-                    <button
-                      className="view-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/dashboard/${s.id}`);
-                      }}
+        <>
+          <div className="table-wrap">
+            <table className="submissions-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  {columns.map(({ label, key }) => (
+                    <th
+                      key={key}
+                      className="sortable-th"
+                      onClick={() => handleSort(key)}
                     >
-                      👁 View
-                    </button>
-                    <button
-                      className="delete-btn"
-                      onClick={(e) => handleDeleteClick(s.id, s.name, e)}
-                    >
-                      🗑 Delete
-                    </button>
-                  </td>
+                      <div className="th-inner">
+                        {label}
+                        <SortIcon
+                          column={key}
+                          sortKey={sortKey}
+                          sortDir={sortDir}
+                        />
+                      </div>
+                    </th>
+                  ))}
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {paginatedRows.map((s, index) => (
+                  <tr
+                    key={s.id}
+                    onClick={() => navigate(`/dashboard/${s.id}`)}
+                    className="table-row"
+                  >
+                    <td>{(currentPage - 1) * ROWS_PER_PAGE + index + 1}</td>
+                    <td className="name-cell">{s.name}</td>
+                    <td>{s.gender}</td>
+                    <td>{s.phone}</td>
+                    <td>
+                      <span className="badge">{s.blood_group}</span>
+                    </td>
+                    <td>
+                      <span className="badge">{s.genotype}</span>
+                    </td>
+                    <td>{s.bank_name}</td>
+                    <td>{formatDate(s.created_at)}</td>
+                    <td>
+                      <button
+                        className="view-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/dashboard/${s.id}`);
+                        }}
+                      >
+                        👁 View
+                      </button>
+                      <button
+                        className="delete-btn"
+                        onClick={(e) => handleDeleteClick(s.id, s.name, e)}
+                      >
+                        🗑 Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="pagination">
+              <span className="pagination-info">
+                Showing {(currentPage - 1) * ROWS_PER_PAGE + 1}–
+                {Math.min(currentPage * ROWS_PER_PAGE, filtered.length)} of{" "}
+                {filtered.length}
+              </span>
+              <div className="pagination-controls">
+                <button
+                  className="page-btn"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                >
+                  «
+                </button>
+                <button
+                  className="page-btn"
+                  onClick={() => setCurrentPage((p) => p - 1)}
+                  disabled={currentPage === 1}
+                >
+                  ‹ Prev
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(
+                    (p) =>
+                      p === 1 ||
+                      p === totalPages ||
+                      Math.abs(p - currentPage) <= 1,
+                  )
+                  .reduce((acc, p, i, arr) => {
+                    if (i > 0 && p - arr[i - 1] > 1) acc.push("...");
+                    acc.push(p);
+                    return acc;
+                  }, [])
+                  .map((p, i) =>
+                    p === "..." ? (
+                      <span key={`dot-${i}`} className="page-dots">
+                        …
+                      </span>
+                    ) : (
+                      <button
+                        key={p}
+                        className={`page-btn ${currentPage === p ? "active" : ""}`}
+                        onClick={() => setCurrentPage(p)}
+                      >
+                        {p}
+                      </button>
+                    ),
+                  )}
+                <button
+                  className="page-btn"
+                  onClick={() => setCurrentPage((p) => p + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next ›
+                </button>
+                <button
+                  className="page-btn"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                >
+                  »
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
